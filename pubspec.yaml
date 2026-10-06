@@ -1,0 +1,23 @@
+name: cargacerta_ar
+description: CargaCerta AR - planejamento inteligente de mudanças com medição assistida por câmera.
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.5.0
+  flutter: ">=3.24.0"
+
+# Poucas dependências de propósito (menos código de terceiros = menor risco).
+dependencies:
+  flutter:
+    sdk: flutter
+  camera: ^0.11.0
+  shared_preferences: ^2.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true

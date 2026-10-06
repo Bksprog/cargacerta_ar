@@ -1,0 +1,25 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+pubspec.lock.bak
+*.iml
+.idea/
+
+# Segredos e assinatura (NUNCA versionar)
+*.jks
+*.keystore
+key.properties
+android/key.properties
+ios/Runner/GoogleService-Info.plist
+android/app/google-services.json
+.env
+.env.*
+
+# Símbolos de depuração gerados com --obfuscate
+symbols/
+*.symbols
+
+.DS_Store
