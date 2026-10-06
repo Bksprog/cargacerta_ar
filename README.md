@@ -1,170 +1,287 @@
 # CargaCerta AR
 
-Planejamento inteligente de mudanças: o usuário aponta a câmera, mede os móveis,
-classifica cada um e recebe **volume estimado, veículo sugerido, ordem de
-carregamento e alertas**. Um único código Flutter para Android, iOS e Web
-(responsivo: barra inferior no celular, trilho lateral em telas largas).
+Aplicação desenvolvida em **Flutter e Dart** para auxiliar no planejamento e organização de cargas em veículos.
 
-Baseado no mini projeto e no infográfico "Como o CargaCerta AR funciona".
+O CargaCerta AR permite cadastrar veículos e objetos, realizar medições e calibrações por imagem e gerar uma sugestão de organização da carga, buscando aproveitar melhor o espaço disponível.
 
-| Etapa do infográfico | Onde está |
-|---|---|
-| 1 Calibrar | `ui/pages/calibrate_page.dart`, `domain/calibration.dart` |
-| 2 Mapear e selecionar | `ui/pages/map_page.dart`, `furniture_editor_page.dart`, `measure_screen.dart` |
-| 3 Classificar | `ui/pages/classify_page.dart` (desmontável, frágil, macio, pesado, empilhável, orientação) |
-| 4 Recomendar | `ui/pages/recommend_page.dart`, `domain/plan.dart`, `domain/load_planner.dart` |
+> **Status:** Em desenvolvimento
 
-O botão **Carregar exemplo** (etapa 2) recria o cenário do infográfico:
-~8,6 m³ de capacidade mínima e **Caminhão 3/4** como veículo sugerido.
+---
 
-## Como a medição funciona (importante)
+## Demonstração
 
-Esta versão usa o modo de **calibração manual por referência**, que o próprio PDF
-prevê como alternativa ao rastreamento de planos/profundidade:
+**Aplicação Web:**  
+https://bksprog.github.io/cargacerta_ar/
 
-1. tira a foto (fica só em memória);
-2. você marca as duas pontas de um objeto de tamanho conhecido (porta, folha A4, cartão, trena);
-3. o app calcula pixels por metro e mede qualquer segmento **no mesmo plano**.
+> A versão atual utiliza recursos de medição e calibração por imagem. O projeto não utiliza ARCore/ARKit nativamente neste momento.
 
-Limite físico: o erro cresce se o móvel estiver mais perto/longe da câmera que a
-referência, ou se o celular estiver inclinado. O app avisa quando a referência
-ocupa pouco da foto. **Não é AR com rastreamento (ARCore/ARKit)** e não mede
-profundidade; isso exige código nativo e não existe no navegador (ver Roadmap).
-Toda medida pode ser digitada ou corrigida manualmente.
+---
 
-## Rodar
+## Funcionalidades
 
-```bash
-# 1) Gera as pastas nativas que faltam (android/, ios/, web/) sem tocar em lib/
-git init && git add -A && git commit -m "base"   # recomendado antes do create
-flutter create --platforms=android,ios,web --project-name cargacerta_ar --org br.com.cargacerta .
+- Cadastro e gerenciamento de veículos
+- Cadastro de móveis e objetos
+- Cadastro de peças e dimensões
+- Medição por imagem
+- Calibração utilizando objetos de referência
+- Classificação de objetos
+- Estimativa de dimensões
+- Planejamento da distribuição da carga
+- Visualização da disposição dos objetos
+- Recomendações para organização da carga
+- Validação de dados
+- Persistência de informações
+- Interface responsiva para Web
 
-# Se o create sobrescrever algo (ex.: test/widget_test.dart), restaure: git checkout -- lib test pubspec.yaml
-flutter pub get
-flutter test                      # testes de domínio (volume, empacotamento, validação)
-flutter run -d chrome             # demo web (localhost conta como contexto seguro)
-flutter run                       # celular conectado
-```
+---
 
-## Publicar o link de demonstração (GitHub Pages)
+## Tecnologias
 
-A câmera no navegador **exige HTTPS**; o GitHub Pages já entrega HTTPS.
+- **Flutter**
+- **Dart**
+- **Material Design**
+- **Git**
+- **GitHub Actions**
+- **GitHub Pages**
 
-1. Crie um repositório no GitHub e envie este projeto para a branch `main`.
-2. No repositório: **Settings → Pages → Source: GitHub Actions**.
-3. O workflow `.github/workflows/deploy-web.yml` roda análise + testes, gera o build
-   web e publica em `https://SEU-USUARIO.github.io/NOME-DO-REPO/`.
-4. Abra o link no celular e permita a câmera.
+---
 
-Alternativas com cabeçalhos de segurança de verdade (CSP, Permissions-Policy):
-**Netlify** ou **Cloudflare Pages** (`flutter build web --release --no-web-resources-cdn`
-e publique `build/web`; o arquivo `web/_headers` já vai junto).
+## Estrutura do projeto
 
-## Configuração nativa da câmera
-
-**Android** (`android/app/src/main/AndroidManifest.xml`):
-
-```xml
-<uses-permission android:name="android.permission.CAMERA"/>
-<uses-feature android:name="android.hardware.camera" android:required="false"/>
-<application
-    android:allowBackup="false"
-    android:usesCleartextTraffic="false" ...>
-```
-
-`android/app/build.gradle(.kts)`: `minSdk = 21` (ou superior).
-
-**iOS** (`ios/Runner/Info.plist`):
-
-```xml
-<key>NSCameraUsageDescription</key>
-<string>A câmera é usada para medir seus móveis. As fotos não saem do aparelho.</string>
-```
-
-Não declare permissão de microfone nem de rede: o app não usa nenhuma das duas.
-
-## Builds de produção
-
-```bash
-flutter build appbundle --release --obfuscate --split-debug-info=build/symbols
-flutter build ipa       --release --obfuscate --split-debug-info=build/symbols
-flutter build web       --release --no-web-resources-cdn
-```
-
-Guarde `build/symbols` (para ler stack traces) e o keystore **fora** do repositório
-(o `.gitignore` já bloqueia `*.jks`, `key.properties` etc.).
-
-## Segurança: o que já está feito
-
-- **Privacidade por padrão:** zero chamadas de rede no código, sem analytics, sem
-  microfone (`enableAudio: false`). Fotos só em memória; na versão nativa o arquivo
-  temporário da câmera é apagado logo após a leitura; a câmera é liberada quando o
-  app sai de cena.
-- **Validação de toda entrada** (`core/validators.dart`): números só com dígitos,
-  intervalos fixos, nomes sem caracteres de controle/direção, limites de itens e unidades.
-- **Armazenamento local desconfiado:** o JSON salvo é revalidado campo a campo ao
-  carregar (tamanho máximo, versão, tipos, faixas); registro adulterado é descartado.
-  Botão **Apagar dados** limpa tudo do aparelho.
-- **Poucas dependências** (`camera`, `shared_preferences`), formatação sem `intl`,
-  Dependabot semanal para pub e GitHub Actions.
-- **Web:** `Permissions-Policy` (só câmera), `nosniff`, `no-referrer`, anti-iframe e
-  CSP em `web/_headers`; build sem CDN (nada de scripts de terceiros em runtime).
-- **Erros contidos:** handler global sem expor stack trace em produção.
-
-## Segurança: pendências antes de lançar de verdade
-
-- Trocar a CSP de `Report-Only` para enforcement depois de checar o console.
-- Fixar as Actions por SHA de commit e travar `pubspec.lock` no repositório.
-- Se passar a haver login, backend ou orçamentos na nuvem: TLS com pinning opcional,
-  tokens em `flutter_secure_storage`, rate limit e revisão de LGPD (consentimento,
-  retenção, direito de exclusão). Hoje não há dados pessoais, só medidas de móveis.
-- O armazenamento local **não é criptografado** (na web fica em `localStorage`). Não
-  guarde endereços, nomes ou fotos sem antes criptografar.
-- Teste em aparelhos reais (permissão negada, câmera ocupada, rotação, iOS Safari).
-
-## Estrutura
-
-```
+```text
 lib/
-  core/      formatação pt-BR, validação, limpeza de temporários
-  domain/    Dart puro e testável: móveis, peças, volume, calibração,
-             empacotamento 3D, recomendação de veículo, alertas
-  data/      repositório local (validado) com interface trocável
-  state/     AppState (ChangeNotifier) + cache de empacotamento
-  ui/        tema (paleta do infográfico), páginas das 4 etapas, câmera, desenho 3D
-test/        validação, calibração, volume, serialização, empacotador
+├── core/
+│   ├── format.dart
+│   ├── secure_temp.dart
+│   └── validators.dart
+│
+├── data/
+│   └── inventory_repository.dart
+│
+├── domain/
+│   ├── calibration.dart
+│   ├── estimate.dart
+│   ├── furniture.dart
+│   ├── load_planner.dart
+│   ├── piece.dart
+│   ├── plan.dart
+│   ├── presets.dart
+│   ├── reference.dart
+│   └── vehicle.dart
+│
+├── state/
+│   └── app_state.dart
+│
+├── ui/
+│   ├── pages/
+│   ├── widgets/
+│   └── theme.dart
+│
+├── app.dart
+└── main.dart
+
+test/
+├── calibration_test.dart
+├── estimate_test.dart
+├── load_planner_test.dart
+├── serialization_test.dart
+├── validators_test.dart
+└── widget_test.dart
 ```
 
-### Regras da carga (empacotador 3D)
+---
 
-Pesado só no piso e carregado primeiro · frágil e peças sem “empilhável” não recebem
-nada por cima · macio aceita só carga leve (até 15 kg) · nada mais pesado sobre algo mais
-leve · “orientação”, frágil e pesado nunca são deitados · desmontável vira duas peças
-(maior lado ao meio) · essenciais são carregados primeiro · apoio mínimo de 80% da base.
-A ordem de carregamento é a ordem de posicionamento. O resultado considera a melhor de
-4 estratégias de ordenação/inclinação.
+## Como executar
 
-## Frota e valores
+### Pré-requisitos
 
-`domain/vehicle.dart` traz uma frota **ilustrativa** (Utilitário, Van, Caminhão 3/4,
-toco, truck). Substitua pelas medidas internas e cargas úteis reais da transportadora.
-A reserva (padrão 20%) é ajustável na etapa 4.
+É necessário ter o Flutter instalado.
 
-## Roadmap: AR nativo de verdade
+Verifique a instalação com:
 
-1. Definir uma interface `MeasurementEngine` (hoje a lógica está em `measure_screen.dart`).
-2. Android: ARCore (planos + Depth API); iOS: ARKit/RealityKit (LiDAR quando houver),
-   via plugin mantido ou *platform channel*. Avaliar a manutenção de cada plugin.
-3. Manter a calibração por referência como plano B (e como único modo na web).
-4. Detecção automática de móveis (modelo on-device) para pré-selecionar caixas.
-5. Cadastro de veículos e orçamento via API autenticada.
+```bash
+flutter --version
+```
 
-## Limitações conhecidas
+### Instalação
 
-- Não foi possível compilar nem rodar `flutter analyze`/`flutter test` no ambiente em
-  que este código foi escrito (sem SDK). A lógica de empacotamento foi validada em um
-  protótipo equivalente (6.000 cenários aleatórios) e portada; rode os testes localmente
-  e corrija qualquer ajuste de versão do Flutter/pacotes.
-- Fonte padrão do Material. Para usar a tipografia do infográfico, adicione uma fonte em
-  `assets/fonts` e declare no `pubspec.yaml` (bundlada, sem Google Fonts em runtime).
-- Sem modo escuro.
+Clone o repositório:
+
+```bash
+git clone https://github.com/Bksprog/cargacerta_ar.git
+```
+
+Entre na pasta:
+
+```bash
+cd cargacerta_ar
+```
+
+Instale as dependências:
+
+```bash
+flutter pub get
+```
+
+Execute o projeto:
+
+```bash
+flutter run
+```
+
+Para executar especificamente na Web:
+
+```bash
+flutter run -d chrome
+```
+
+---
+
+## Testes
+
+O projeto possui testes automatizados para diferentes partes da aplicação.
+
+Para executar todos os testes:
+
+```bash
+flutter test
+```
+
+Os testes abrangem funcionalidades como:
+
+- Calibração
+- Estimativas
+- Planejamento de carga
+- Serialização
+- Validação
+- Widgets
+
+---
+
+## Arquitetura
+
+O projeto utiliza uma organização baseada na separação de responsabilidades.
+
+### `core`
+
+Contém funcionalidades compartilhadas e utilitários, como formatação, validações e recursos auxiliares.
+
+### `data`
+
+Responsável pelo acesso e gerenciamento dos dados utilizados pela aplicação.
+
+### `domain`
+
+Contém as principais entidades e regras de negócio do sistema, incluindo veículos, móveis, peças, planos e planejamento de carga.
+
+### `state`
+
+Responsável pelo gerenciamento do estado da aplicação.
+
+### `ui`
+
+Contém as telas, componentes visuais, temas e elementos de interface.
+
+Essa separação facilita a manutenção e evolução do projeto.
+
+---
+
+## Medição e calibração
+
+A aplicação possui um sistema de medição baseado em imagem.
+
+Para realizar uma medição, o usuário pode utilizar um objeto de referência com dimensão conhecida. A partir dessa referência, o sistema realiza a calibração da imagem e utiliza a escala obtida para estimar as dimensões dos objetos.
+
+### Limitações atuais
+
+A precisão das medições depende de fatores como:
+
+- Qualidade da imagem
+- Posicionamento da câmera
+- Perspectiva
+- Iluminação
+- Objeto utilizado como referência
+- Posicionamento do objeto na imagem
+
+Por esse motivo, os resultados devem ser considerados **estimativas**, especialmente em situações que exigem precisão física.
+
+---
+
+## Planejamento de carga
+
+A aplicação utiliza as dimensões cadastradas dos objetos e do veículo para auxiliar na organização da carga.
+
+O sistema busca encontrar uma disposição adequada dos objetos considerando o espaço disponível e as dimensões informadas.
+
+O planejamento tem como objetivo auxiliar o usuário na tomada de decisão e não substitui uma avaliação profissional para situações que envolvam requisitos técnicos ou de segurança específicos.
+
+---
+
+## Segurança e privacidade
+
+O projeto foi desenvolvido considerando boas práticas para evitar o versionamento de informações sensíveis.
+
+Arquivos como:
+
+```text
+.env
+*.jks
+*.keystore
+key.properties
+```
+
+são ignorados pelo Git através do `.gitignore`.
+
+Informações sensíveis e credenciais não devem ser adicionadas ao repositório.
+
+---
+
+## CI/CD
+
+O projeto possui configuração de **GitHub Actions** para automatizar o processo de publicação da versão Web.
+
+O workflow está localizado em:
+
+```text
+.github/workflows/deploy-web.yml
+```
+
+Dessa forma, alterações enviadas ao repositório podem ser utilizadas no processo de atualização da aplicação Web.
+
+---
+
+## Roadmap
+
+Algumas melhorias planejadas para versões futuras:
+
+- [ ] Melhorar a precisão das medições
+- [ ] Implementar recursos de AR nativo
+- [ ] Melhorar o algoritmo de planejamento de carga
+- [ ] Adicionar mais opções de veículos
+- [ ] Adicionar mais tipos de objetos
+- [ ] Melhorar a visualização 3D
+- [ ] Melhorar a experiência do usuário
+- [ ] Expandir os testes automatizados
+- [ ] Disponibilizar versões para Android e iOS
+
+---
+
+## Objetivo do projeto
+
+O CargaCerta AR foi desenvolvido como um projeto de estudo e aplicação prática de conceitos de **desenvolvimento de software, interfaces, processamento de imagens, modelagem de dados e algoritmos de planejamento**.
+
+O projeto também serve como experiência prática no desenvolvimento de aplicações utilizando Flutter e Dart.
+
+---
+
+## Autor
+
+**Bernardo Knies Soares**
+
+Projeto desenvolvido utilizando **Flutter + Dart**.
+
+---
+
+## Licença
+
+Este projeto é destinado a fins educacionais e de desenvolvimento.
